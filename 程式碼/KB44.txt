@@ -1,0 +1,101 @@
+#include <reg51.h>
+#define KBINP P0
+int line2[]={0xf8,0xf9,0xfa,0xfb,0xfc,0xfd,0xfe,0xff};
+int display[8];
+int ary[]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x6f,0x77,0x7c,0x39,0x5e,0x79,0x71};
+unsigned char code num1[]={0x3f,0x7f,0x3f,0x3f,0x40,0x3f,0x67,0x5b,0x40,0x3f,0x3f,0x3f,0x00,0x00,0x00,0x00};
+
+void move(int num);
+void delay(int n);
+void show();
+void EnterShow(); // display 0800-092-000
+int kbscan();
+
+void main(){
+	
+	int kbin;
+	P2=0x3f;
+	while(1)
+	{
+		kbin=kbscan();
+		if(kbin!=0xff)
+		{
+		P2=~kbin;
+		if(P2==0xfe) EnterShow();
+		delay(10);
+		if(P2==0xfd) ex2();
+		delay(10);
+		if(P2==0xfc) ex3();
+		delay(10);
+		}
+	}
+}
+
+void EnterShow()
+{
+	int i,num;
+	for(i=0 ; i<8 ; ++i)
+	{
+		display[i] = 0x00;
+	}
+	while(1){
+		num = num%16;
+		move(num);
+		for(i=0 ; i<100 ; ++i)
+		{
+				show();
+		}
+		++num;
+	}
+}
+
+void move(int num){
+	int i;
+	for(i=0 ; i<8 ; ++i){
+		if(i>0)
+		display[i-1] = display[i] ;
+	}
+	if( num > 12 ) num = 0;
+	display[7] = num1[num];
+}
+
+void show(){
+	int j;
+	for(j=0 ; j<8 ; ++j){
+		P1 = 0xff;
+		P2 = display[j];
+		P1 = line2[j];
+		delay(1);
+	}
+}
+void delay(int n){
+	int i ,j;
+	for( i=0 ; i<n ; ++i)
+		for( j=0 ; j<50 ; ++j);
+}
+
+int kbscan()
+{
+	unsigned char kbp;
+	unsigned char scanln[]={0xfe,0xfd,0xfb,0xf7};
+	unsigned char row,col,kbtemp;
+	kbp=0xff;
+	for(row=0;row<4;row++)
+	{
+		KBINP=scanln[row];
+		kbtemp=KBINP& 0xf0;
+		if(kbtemp !=0xf0)
+		{
+			delay(20);
+			for(col=0;col<4;col++)
+			{
+				if(kbtemp==((scanln[col]&0x0f)*16))
+				{
+					kbp=row*4+col;
+					while((KBINP&0xf0)!=0xf0);
+				}
+			}
+		}
+	}
+	return kbp;	
+}

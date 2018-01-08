@@ -1,0 +1,40 @@
+#include <reg51.h>
+#define KBINP P0
+int kbscan();
+void delay1ms(int n);
+char s[]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x6f,0x77,0x7c,0x39,0x5e,0x79,0x71,0x00};
+void main()
+{ int kbin;
+  P2=s[0];
+  while(1)
+  {	kbin=kbscan();
+    if(kbin!=0xff)
+	  P2=~kbin;
+  }
+}
+int kbscan() 
+{ unsigned char kbp; 
+  unsigned char scanln[]={0xfe,0xfd,0xfb,0xf7}; 
+  unsigned char row, col,kbtemp; 
+  kbp=0xff; 
+  for(row=0;row < 4;row++)
+     { KBINP=scanln[row];
+       kbtemp=KBINP& 0xf0; 
+       if(kbtemp !=0xf0)
+	     { delay1ms(20); 
+         for(col=0;col<4;col++)
+		     { if(kbtemp==((scanln[col]&0x0f)*16))
+			     { kbp=row*4+col; 
+             while((KBINP&0xf0)!=0xf0); 
+           } 
+         } 
+       }
+     } 
+
+  return kbp; 
+} 
+void delay1ms(int n)
+{ int i, j;
+  for(i=0;i<n;i++)
+  for(j=0;j<122;j++);
+} 

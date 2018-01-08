@@ -1,0 +1,56 @@
+/*??A_£g{|!!AA¢X¡±U?F¡MN??A_¡LA¢Do*/
+
+#include <reg51.h>
+#include <intrins.h>
+
+void delay10ms(int count);
+void delay1ms(int count);
+code unsigned char scanline[]={0xf0,0xf1,0xf2,0xf3,0xf4,0xf5,0xf6,0xf7};//cw¡Mq¡Ó`?A¢X£g?¢X?e¢DX
+unsigned char i=0;			//AU?A?¢X¡Ó`?Aao¡ÂA?T
+int k,f,u;
+void main(void)     //£g{|!?}cl
+{
+	EA=1;			//-o¢Dy?}¡ÓOA`??A_
+	EX0=1;  		//?}¡ÓO¢D~3!??A_ 0
+	IT0=1;        // 3]¡Mm|¡L ?U-¢XauA2£go?O|!
+	while(1){		//¡¦`Ao
+		P2=0x00;
+		delay10ms(50);
+		P2=0xff;
+		delay10ms(50);
+	}
+}
+
+void key_scan()   interrupt 0    //¢D~3!??A_ 0  0aoAu¢Dy¡ÂA3I¢Xa,AT89C52|36-O??A_!A3I?aao£g{|!¡MI!A¡±U-I¡ÓN6-O??A_¢Dt3!¢DI?W
+{								//AoAa|r"interrupt" !A 3o?OC?y¡L¢Dao??A_¡Lc?Aai¢DUak
+	i++;						//¡LC?o?@|¡M¢DDaO?Wao"INT0"Aa!A??A_atA3!A?O¢DI¡MO¡Lc?A!A¡±U-I¡ÓqP2?e¢DXAI?GLED
+	if(i==8)					//¡MO£g{|!?O£g1¡±U-I1i??A_ao?@-O?{AN!A¡±A¡Óa¡±A-I¡Âa1i??A_¡Lc?Aao?O¢DI|3-O?F¡MN
+		i=0;					
+	
+	for(u=0;u<10;++u){
+		for(f=0;f<30;++f){
+			for(k=0;k<8;++k)
+			{
+				P1=0xff;
+				P2=0x3f;
+				P1=scanline[k];
+				delay1ms(1);
+			}
+		}
+		P2=0;
+		delay10ms(100);
+	}
+}
+
+void delay10ms(int count)
+{
+	int i,j;
+	for(i=0;i<count;++i)
+	for(j=0;j<1490;++j);
+}
+void delay1ms(int count)
+{
+	int i,j;
+	for(i=0;i<count;++i)
+	for(j=0;j<122;++j);
+}

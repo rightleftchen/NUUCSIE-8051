@@ -1,0 +1,29 @@
+#define KBINP P0
+
+void delay1ms(int n)
+{ int i, j;
+  for(i=0;i<n;i++)
+  for(j=0;j<122;j++);
+} 
+
+int kbscan() 
+{ unsigned char kbp; 
+  unsigned char scanln[]={0xfe,0xfd,0xfb,0xf7}; 
+  unsigned char row, col,kbtemp; 
+  kbp=0xff; 
+  for(row=0;row < 4;row++)
+     { KBINP=scanln[row];
+       kbtemp=KBINP& 0xf0; 
+       if(kbtemp !=0xf0)
+	     { delay1ms(20); 
+         for(col=0;col<4;col++)
+		     { if(kbtemp==((scanln[col]&0x0f)*16))
+			     { kbp=row*4+col; 
+             while((KBINP&0xf0)!=0xf0); 
+           } 
+         } 
+       }
+     } 
+
+  return kbp; 
+} 

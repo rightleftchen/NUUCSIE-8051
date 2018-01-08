@@ -1,0 +1,36 @@
+#include <reg51.h>
+#include <intrins.h>
+#define RL(x) _crol_(x,1);
+
+void delay10ms(int count);
+void LED8_RL(int x, y, z);
+unsigned char code seg7[] = {0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f, 0x77, 0x7c, 0x39, 0x5e, 0x79, 0x71, 0x3e, 0x00, 0x40};	//18 16?U 17???? --?18
+unsigned char code scanline[] = {0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff};	
+unsigned char code numberLine[] = {16, 0, 3, 2, 4, 0, 4, 8, 18, 18, 16, 0, 3, 2, 4, 0, 0, 5, 17, 17};	//16='U',17=' ',18='-'
+
+
+void main()
+{
+	int i, j, position, inNow;
+	position = 0;
+	while(1)
+	{	
+		for(j = 0; j < 100; j++)  //don't touch
+		{
+			for (i = 0, inNow = position; i < 8; i++, inNow++)	// don't touch
+				{
+					P2 = seg7[numberLine[(inNow%20)]];
+					P1 = scanline[i];
+					delay10ms(1);
+				}
+		}
+		++position;
+	}
+}	
+	
+void delay10ms(int count)
+{
+		int i, j;
+		for (i = 0; i < count; i++)
+		for (j = 0; j < 122; j++);
+}

@@ -1,0 +1,147 @@
+#include <reg51.h>
+#include <intrins.h>
+#define KBINP P0
+int kbscan();
+void delay1ms(int n);
+void delay10ms(int count)
+{	int i,j;
+	for(i=0;i<count;i++)
+	for(j=0;j<1940;j++);
+}
+
+void delay20ms(int count)
+{	int i,j;
+	for(i=0;i<count;i++)
+	for(j=0;j<194;j++);
+}			
+	
+void main()
+{
+	int kbin,m,i,k;
+  char scanline[]={0xf0,0xf1,0xf2,0xf3,0xf4,0xf5,0xf6,0xf7};
+	
+	kbin=kbscan();
+	
+  if(kbin != 0xff)
+	{ if(kbin==0x01)
+		{ for(m=0;m<10;m++)
+			{ P2=0x7e;
+				delay10ms(50);
+				P2=0xff;
+				delay10ms(50);
+			}
+		}
+				
+		 if(kbin==0x02)
+		 { for(m=0;m<10;m++)
+			 { P2=0x3C;
+				 delay10ms(50);
+				 P2=0xff;
+				 delay10ms(50);
+			 }
+		 }
+							
+		 if(kbin==0x05)
+		 { for(m=0;i<10;m++)
+			 { for(k=0;k<30;k++)
+				 { P2=0x6d;
+           P1=scanline[0];
+           delay20ms(1);
+					 P2=0x6d;
+           P1=scanline[1];
+           delay20ms(1);
+				   P2=0x6d;
+           P1=scanline[2];
+           delay20ms(1);
+					 P2=0x6d;
+           P1=scanline[3];
+           delay20ms(1);
+					 P2=0x6d;
+           P1=scanline[4];
+           delay20ms(1);	
+					 P2=0x6d;
+           P1=scanline[5];
+           delay20ms(1);
+					 P2=0x6d;
+           P1=scanline[6];
+           delay20ms(1);	
+					 P2=0x6d;
+           P1=scanline[7];
+           delay20ms(1);		
+				 }
+				 P1 = 0xff;
+				 P2 = 0x00;	
+				 delay20ms(250);
+				 if(m==9)
+				 { break;
+				 }
+
+       }
+								 
+		 }
+							 
+		 if(kbin==0x06)
+		 { for(m=0;i<10;m++)
+			 { for(k=0;k<30;k++)
+				 { P2=0x7d;
+           P1=scanline[0];
+           delay20ms(1);
+					 P2=0x7d;
+           P1=scanline[1];
+           delay20ms(1); 
+					 P2=0x7d;
+           P1=scanline[2];
+           delay20ms(1);
+				   P2=0x7d;
+           P1=scanline[3];
+           delay20ms(1);
+					 P2=0x7d;
+           P1=scanline[4];
+           delay20ms(1);	
+					 P2=0x7d;
+           P1=scanline[5];
+           delay20ms(1);
+					 P2=0x7d;
+           P1=scanline[6];
+           delay20ms(1);	
+					 P2=0x7d;
+           P1=scanline[7];
+           delay20ms(1);		
+				 }
+				 P1 = 0xff;
+				 P2 = 0x00;	
+				 delay20ms(250);
+				 if(m==9)
+				 { break;
+				 }
+			 }
+		 }
+	}
+}
+int kbscan() 
+{ unsigned char kbp; 
+  unsigned char scanln[]={0xfe,0xfd,0xfb,0xf7}; 
+  unsigned char row, col,kbtemp; 
+  kbp=0xff; 
+  for(row=0;row < 4;row++)
+     { KBINP=scanln[row];
+       kbtemp=KBINP& 0xf0; 
+       if(kbtemp !=0xf0)
+	     { delay1ms(20); 
+         for(col=0;col<4;col++)
+		     { if(kbtemp==((scanln[col]&0x0f)*16))
+			     { kbp=row*4+col; 
+             while((KBINP&0xf0)!=0xf0); 
+           } 
+         } 
+       }
+     } 
+
+  return kbp; 
+} 
+void delay1ms(int n)
+{ int i, j;
+  for(i=0;i<n;i++)
+  for(j=0;j<122;j++);
+} 
+

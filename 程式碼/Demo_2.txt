@@ -1,0 +1,185 @@
+=====================鍵盤LED顯示========================
+#include <reg51.h>
+#define KBINP P0
+void delay(int count);
+int kbscan();
+int kbin;
+main()
+{
+	P0=0;
+	
+	while(1){
+		kbin=kbscan();
+		if(kbin!=0xff){
+			P2=kbin;
+		  P2=~P2;
+		
+	}
+}
+void delay(int count){
+	int i,j;
+	for(i=0; i<count; ++i)
+	for(j=0; j<194; ++j);
+}
+int kbscan(){
+	unsigned char kbp;
+	unsigned char scanln[]={0xfe,0xfd,0xfb,0xf7};
+	unsigned char row,col,kbtemp;
+	kbp=0xff;
+	for(row=0;row<4;row++){
+		KBINP=scanln[row];
+		kbtemp=KBINP&0xf0;
+		if(kbtemp!=0xf0){
+			delay(20);
+		for(col=0;col<4;col++){
+		if(kbtemp==((scanln[col]&0x0f)*16)){
+			kbp=row*4+col;
+		while((KBINP&0xf0)!=0xf0);
+		}
+		}
+	}
+ }
+	return kbp;
+}
+======================鍵盤七段顯示器顯示===========================
+/*鍵盤程式,本程式涉及到外中斷，定時器中斷，比較複雜，耐心學，幫助了解中斷事件*/
+
+#include <reg51.h>
+#include <intrins.h>
+
+
+sbit SPK=P3^4;		//SPK定義為P3的第4pin，就是驅動蜂鳴器的那個腳
+sbit JDQ=P3^5;		//JDQ定義為P3的第5pin，就是驅動繼電器的那個腳
+
+code unsigned char table[]=
+			{0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x6f,
+			0x77,0x7c,0x39,0x5e,0x79,0x71};
+			//七段顯示器 0-9 A-F 表(共陰)
+
+code unsigned char key_tab[17]={0xed,0x7e,0x7d,0x7b,
+								0xbe,0xbd,0xbb,0xde,
+								0xdd,0xdb,0x77,0xb7,
+								0xee,0xd7,0xeb,0xe7,0XFF};//========================此數組為鍵盤編碼，
+															//本人採用類式類似電話按鍵的編碼模式，方便以後設計
+										//	C(C)	0(D)	E(E)	F(F)					0x0c 0x00 0x0e 0x0f
+										//	7(8)	8(9)	9(A)	d(B)					0x07 0x08 0x09 0x0e
+										//	4(4)	5(5)	6(6)	b(7)	           對應16進製碼︰	0x04 0x05 0x06 0x0b
+										//	1(0)	2(1)	3(2)	A(3)					0x01 0x02 0x03 0x0a
+
+
+
+										//打個比方，如果你按下0鍵，P0讀到數據為0xed
+										//如果你按下2鍵，P0讀到數據為0x7d,按下9鍵為0xdb,
+										//我們將讀到的P0數據經過查表法就能得到相應的16進製碼
+					
+										//鍵盤的讀取，我們採用中斷法，
+										//中斷(INT0),利用中斷來掃描鍵盤矩陣，讀取資料
+
+unsigned char l_tmpdate[8]={0,0,0,0,0,0,0,0};//定義數組變量
+unsigned char l_key=0x0;					//定義變量，存放鍵值	
+unsigned char l_keyold=0xFF;	//做為按鍵鬆開否的判斷				
+
+void ReadKey(void);   //掃描鍵盤 獲取鍵值
+void delay();//延時子函數，5個空指令
+void display(unsigned char *lp,unsigned char lc);//數字的顯示函數；lp為指向數組的位址，lc為顯示的個數
+												
+
+
+void main(void)     //程式開始
+{
+	EA=1;			//首先開啟總中斷
+	EX0=1;  		//開啟外部中斷 0
+	IT0=1;        // 設置成下降沿觸發模式
+	P0=0xf0;		//連接外中斷0，有鍵按下中斷函數
+	while(1){
+		display(&l_key,1);			//輸出獲取的鍵值碼
+
+		if(l_key==0x0e)				//這裡我們檢測是否按了0x0e鍵，
+			JDQ=0;					//是，我們就驅動繼電器打開
+		if(l_key==0x0c)				//檢測是否按下了0x0c鍵，
+			JDQ=1;					//是，我們就驅動繼電器斷開
+	}
+}
+
+void key_scan()   interrupt 0    //外部中斷 0  0的優先級最高 							
+{	
+	EX0=0;					//在讀鍵盤期間，我們關閉中斷，防止干擾帶來的多次中斷
+
+							//為了消除抖動帶來的干擾，在按下鍵後我們採用延時十多毫秒再讀取鍵值
+								//如果採用循環語句來延時，比如（for,while。。。)會使CPU處理循環而佔用
+								//系統資源，所以這裡我們採用定時器中斷法，讓定時器等待十多毫秒觸發定時器
+								//中斷，這裡用到定時器0
+
+	TMOD&=0XF1;				//設置定時器0為模式1模式，
+	TH0=0X2E;				//設置初值，為12毫秒
+	TL0=0X00;
+	ET0=1;					//開啟定時器中斷0
+	TR0=1;					//啟動定時器計數	
+} 
+void timer0_isr(void) interrupt 1	//定時器0的中斷函數
+{	
+	TR0=0;						//中斷後我們停止計數
+	ReadKey();					//定時器計數12毫秒後產生中斷，調用此函數，讀取鍵值
+}
+void ReadKey(void)						//讀鍵盤值
+{
+	unsigned char i,j,key;
+	j=0xfe;
+	key=0xff;			//設定初值
+	for (i=0;i<4;i++){		
+		P0=j;				//P0低4位循環輸出0，掃描鍵盤
+		//leday();
+		if ((P0&0xf0)!=0xf0){	//如果有鍵按下，P0高4位不會為1，									
+			key=P0;				//讀取P0，退出循環，否則循環下次
+			break;		
+		}
+		j=_crol_(j,1);			//此函數功能為左循環移位
+	}
+	if (key==0xff){				//如果讀取不到P0的值，比如是干擾，我們不做鍵值處理，返回
+		l_keyold=0xff;
+		//l_key=0xff;
+		P0=0xf0;			//恢復P0，等待按鍵按下
+		EX0=1;					//返回之前，開啟外中斷
+		SPK=1;
+		return;
+	}
+	SPK=0;					//有鍵按下，我們驅動蜂鳴器響
+	if(l_keyold==key){		//檢測按鍵放開否，如果一樣表明沒放開，
+		TH0=0X2E;			//我們繼續啟動定時器，檢測按鍵鬆開否
+		TL0=0;
+		TR0=1;		
+	   	return;
+	}		
+	TH0=0X2E;			
+	TL0=0;
+	TR0=1;					//我們繼續啟動定時器，檢測按鍵鬆開否
+
+	l_keyold=key;			//獲取鍵碼做為放開的憑証
+
+	for(i=0;i<17;i++){			//查表獲得相應的16進製值存放l_key變量中
+		if (key==key_tab[i]){
+			l_key=i;
+			break;
+		}
+	}
+			//程式執行到這裡，就表明有鍵值被讀取存放於l_key變量中，主程式就可以檢測此變量做相應外，
+			//此時我們回到主程式
+}  
+void display(unsigned char *lp,unsigned char lc)//顯示
+{
+	unsigned char i;		//定義變量
+	P2=0;					//p2為輸出
+	P1=P1&0xF8;				//將P1的前3位輸出0，對應138，全0為第一位七段顯示器
+	for(i=0;i<lc;i++){		//循環顯示
+	P2=table[lp[i]];		//查表法得到要顯示數字的數碼段
+	delay();				//延時5個空指令	
+	if(i==7)				//檢測顯示完8位否，完成直接退出，不讓P1再加1，否則進位影響到第四位數據
+		break;
+	P2=0;					//清除為0，準備顯示下位
+	P1++;					//下一位七段顯示器
+	}
+}
+void delay(void)								//空5個指令
+{
+	_nop_();_nop_();_nop_();_nop_();_nop_();
+}  

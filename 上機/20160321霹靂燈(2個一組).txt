@@ -1,0 +1,22 @@
+#include <reg51.h>
+void delay10ms(int count)
+{
+	int i,j;
+	for(i=0;i<count;i++)
+	for(j=0;j<1940;j++);
+}
+
+void main()
+{
+	char ary[9]={0x7E,0x3C,0x99,0xC3,0xE7,0xC3,0x99,0x3C,0x7E};
+	while(1)
+	{
+	int a;
+	for(a=0;a<9;++a)
+	{
+		P2=ary[a];
+		delay10ms(100);
+	}	
+	}
+
+}

@@ -1,0 +1,27 @@
+#include <reg51.h>
+void delay10ms(int count)
+{
+	int i,j;
+	for(i=0;i<count;i++)
+	for(j=0;j<1940;j++);
+}
+
+void main()
+{
+	P2=0xF8;
+  delay10ms(100);
+	P2=0xF1;
+	delay10ms(100);
+	P2=0xE3;	
+	delay10ms(100);
+	P2=0xC7;
+	delay10ms(100);
+  P2=0x8F;
+	delay10ms(100);
+	P2=0x1F;
+	delay10ms(100);
+	P2=0x3E;
+	delay10ms(100);
+	P2=0x7C;
+	delay10ms(100);
+}

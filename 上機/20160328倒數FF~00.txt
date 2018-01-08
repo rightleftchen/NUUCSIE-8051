@@ -1,0 +1,31 @@
+#include <reg51.h>
+void delay10ms(int count);
+void main()
+{ 
+	unsigned char numbers[16]={0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,0x7F,0x67,0x77,0x7C,0x39,0x5E,0x79,0x71};
+  char position[]={0xf6,0xf7};
+  int i,j,kk;
+  while(1)
+  { for(i=15;i>=0;i--)
+    { for(j=15;j>=0;j--)
+			{ for(kk=0;kk<150;kk++)
+			  { 
+					P2=numbers[j];  //show units place in decimal system
+          P1=position[1];
+          delay10ms(1);
+					
+          P2=numbers[i]; //show ten place in decimal system
+          P1=position[0];
+          delay10ms(1);
+        }
+			}
+      delay10ms(100);
+     }
+  }
+}
+
+void delay10ms(int count)
+{ int i,j;
+  for(i=0;i<count;i++)
+  for(j=0;j<194;j++);
+}
